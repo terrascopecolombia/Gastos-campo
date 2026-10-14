@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#1f3b57">
+<title>Gastos de campo</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root{--az:#1f3b57;--ac:#0f8b6f;--bg:#f3f5f8;--tx:#1d2733;--mu:#6b7785;--br:#dde3ea;--rojo:#c2412d;--am:#b7791f}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--tx);font-size:16px}
+  header{background:var(--az);color:#fff;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:5}
+  header b{font-size:17px} header small{opacity:.8}
+  #red{font-size:12px;background:var(--am);color:#fff;border-radius:10px;padding:2px 8px;margin-left:6px}
+  main{max-width:560px;margin:0 auto;padding:16px}
+  .v{display:none}.v.on{display:block}
+  .card{background:#fff;border:1px solid var(--br);border-radius:14px;padding:16px;margin-bottom:14px}
+  label{display:block;font-size:13px;color:var(--mu);margin:12px 0 4px}
+  input,select{width:100%;font:inherit;padding:11px 12px;border:1px solid var(--br);border-radius:10px;background:#fff;color:var(--tx)}
+  button,.btn{font:inherit;border:0;border-radius:10px;padding:12px 14px;cursor:pointer;background:var(--az);color:#fff;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+  .sec{background:#e7ecf2;color:var(--az)} .lnk{background:none;color:var(--az);padding:6px;font-weight:500}
+  .full{width:100%} .row{display:flex;gap:10px} .row>*{flex:1;min-width:0}
+  .big{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+  .big .btn{flex-direction:column;padding:18px 8px;font-size:15px;border-radius:14px}
+  .big .btn.q{grid-column:1/-1;flex-direction:row;background:var(--ac)}
+  .big svg{width:28px;height:28px}
+  .nums{display:flex;justify-content:space-between;text-align:center;margin-top:10px}
+  .nums div{flex:1} .nums small{display:block;color:var(--mu);font-size:12px} .nums b{font-size:17px}
+  .bar{height:8px;background:#e7ecf2;border-radius:6px;overflow:hidden;margin-top:12px}.bar i{display:block;height:100%;background:var(--ac)}
+  .neg b.s{color:var(--rojo)} .neg .bar i{background:var(--rojo)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chips button{background:#fff;color:var(--tx);border:1px solid var(--br);font-weight:500;padding:9px 12px;font-size:14px}
+  .chips button.on{background:var(--az);color:#fff;border-color:var(--az)}
+  .valor{font-size:26px;font-weight:700;text-align:right}
+  .item{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--br)}
+  .item:last-child{border:0} .item small{color:var(--mu);display:block;font-size:13px}
+  .item .r{text-align:right;white-space:nowrap}
+  .item a,.item .x{font-size:13px;color:var(--az);margin-left:10px;background:none;padding:0;font-weight:500}
+  .item .x{color:var(--rojo)}
+  .tag{font-size:11px;font-weight:600;border-radius:8px;padding:1px 6px;background:#fdf1dc;color:var(--am);margin-left:4px}
+  .tag.err{background:#fbe3df;color:var(--rojo)}
+  #pend{background:#fdf1dc;color:#6b4a12;border-radius:12px;padding:10px 12px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px}
+  #pend button{padding:8px 12px;font-size:14px;background:var(--am)}
+  .prev{display:flex;gap:12px;align-items:center}
+  .prev img{width:84px;height:84px;object-fit:cover;border-radius:10px;border:1px solid var(--br)}
+  .pdf{width:84px;height:84px;border-radius:10px;background:#e7ecf2;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--az);flex:none}
+  .st{font-size:14px;color:var(--mu)} .st.ok{color:var(--ac)} .st.err{color:var(--rojo)}
+  canvas{width:100%;height:150px;border:1px dashed var(--mu);border-radius:10px;background:#fff;touch-action:none}
+  #toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#1d2733;color:#fff;padding:12px 18px;border-radius:10px;font-size:14px;display:none;z-index:20;max-width:90%}
+  #load{position:fixed;inset:0;background:rgba(255,255,255,.7);display:none;align-items:center;justify-content:center;z-index:15;font-weight:600;color:var(--az)}
+  .spin{width:22px;height:22px;border:3px solid #cfd8e3;border-top-color:var(--az);border-radius:50%;animation:g .8s linear infinite;margin-right:10px;flex:none}
+  @keyframes g{to{transform:rotate(360deg)}}
+  h2{font-size:18px;margin:0 0 4px} .mu{color:var(--mu);font-size:14px}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+<header><div><b>Gastos de campo</b><span id="red" class="hidden">Sin señal</span><br><small id="hUser"></small></div><button class="lnk hidden" id="bSalir" style="color:#fff">Salir</button></header>
+<main>
+
+<!-- LOGIN -->
+<section class="v on" id="vLogin"><div class="card">
+  <h2>Bienvenido</h2><p class="mu">Escriba su nombre y el PIN que le dio la oficina.</p>
+  <label>Su nombre</label><input id="lNombre" autocomplete="name">
+  <label>PIN</label><input id="lPin" inputmode="numeric" type="password">
+  <button class="full" style="margin-top:16px" id="bEntrar">Entrar</button>
+</div></section>
+
+<!-- INICIO -->
+<section class="v" id="vHome">
+  <div id="pend" class="hidden"><span id="pendTxt"></span><button id="bSync">Enviar ahora</button></div>
+  <div class="card" id="cCom">
+    <div class="row" style="align-items:end">
+      <div style="flex:3"><label style="margin-top:0">Comisión</label><select id="selCom"></select></div>
+      <button class="sec" style="flex:0 0 auto" id="bNuevaCom">+ Nueva</button>
+    </div>
+    <div id="resumen"></div>
+  </div>
+  <div class="big" id="acciones">
+    <label class="btn" style="margin:0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Foto factura
+      <input type="file" accept="image/*" capture="environment" class="hidden" id="fCam"></label>
+    <label class="btn sec" style="margin:0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4m0 0l-4 4m4-4l4 4M4 16v4h16v-4"/></svg>Galería / PDF
+      <input type="file" accept="image/*,application/pdf" class="hidden" id="fFile"></label>
+    <button class="btn q" id="bRapido"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>Gasto rápido sin foto</button>
+  </div>
+  <div class="card"><h2>Gastos registrados</h2><div id="lista" class="mu">—</div></div>
+  <div style="text-align:center"><button class="lnk" id="bBorrarCom" style="color:var(--rojo);font-size:14px">Eliminar esta comisión</button></div>
+</section>
+
+<!-- NUEVA COMISIÓN -->
+<section class="v" id="vCom"><div class="card">
+  <h2>Nueva comisión</h2><p class="mu">Una comisión es una salida a campo con su presupuesto.</p>
+  <label>Responsable</label><input id="cResp">
+  <label>Proyecto</label><input id="cProy" placeholder="Ej: IDIGER Laderas 2">
+  <label>Lugar</label><input id="cLugar" placeholder="Municipio / vereda">
+  <div class="row"><div><label>Inicio</label><input type="date" id="cIni"></div><div><label>Fin</label><input type="date" id="cFin"></div></div>
+  <label>Presupuesto entregado</label><input id="cPres" inputmode="numeric" class="valor money" placeholder="$ 0">
+  <div class="row" style="margin-top:18px"><button class="sec" data-back>Cancelar</button><button id="bGuardarCom">Crear</button></div>
+</div></section>
+
+<!-- GASTO -->
+<section class="v" id="vGasto"><div class="card">
+  <div class="prev hidden" id="prev"><div id="prevImg"></div><div class="st" id="iaSt"></div></div>
+  <label>Categoría</label><div class="chips" id="gCats"></div>
+  <label>Valor</label><input id="gValor" inputmode="numeric" class="valor money" placeholder="$ 0">
+  <label>Proveedor / quien recibe el pago</label><input id="gProv" placeholder="Opcional en gastos menores">
+  <label>Descripción</label><input id="gDesc" placeholder="Ej: agua y fruta para cuadrilla">
+  <div class="row">
+    <div><label>Fecha</label><input type="date" id="gFecha"></div>
+    <div><label>NIT / C.C.</label><input id="gNit" inputmode="numeric"></div>
+  </div>
+  <div class="row">
+    <div style="flex:1.7"><label>Tipo de soporte</label><select id="gTipo"></select></div>
+    <div><label>N° factura</label><input id="gNum"></div>
+  </div>
+  <div id="recibo" class="hidden">
+    <label>Firma de quien recibe el pago (opcional)</label>
+    <canvas id="firma"></canvas>
+    <button class="lnk" id="bBorrarFirma">Borrar firma</button>
+    <p class="mu" style="margin:4px 0 0">Se generará el recibo de caja menor en PDF con estos datos.</p>
+  </div>
+  <div class="row" style="margin-top:18px"><button class="sec" data-back>Cancelar</button><button id="bGuardar">Guardar gasto</button></div>
+</div></section>
+
+</main>
+<div id="toast"></div>
+<div id="load"><div class="spin"></div><span id="loadTxt">Cargando…</span></div>
+
+<script>
+// ====== URL de la app de Apps Script (termina en /exec) ======
+const API_URL = 'https://script.google.com/macros/s/AKfycbwinf7IwrosIjWS2tHpmMhUGPcR62rW_bgZX7gNemuZZs_6bO1DtGq1-h6YrT1KAVUoQA/exec';
+
+const S = {pin:'', nombre:'', cats:[], tipos:[], ia:false, coms:[], gastos:[], cola:[], archivo:null, cat:'', firmado:false};
+const $ = id => document.getElementById(id);
+const fmt = n => '$ ' + Math.round(n || 0).toLocaleString('es-CO');
+const num = s => Number(String(s || '').replace(/[^\d]/g, '')) || 0;
+const hoy = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const uid = () => (self.crypto && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2);
+const ls = {get:(k, d) => {try {const v = localStorage.getItem('gc_' + k); return v == null ? d : JSON.parse(v);} catch(e) {return d;}},
+            set:(k, v) => {try {localStorage.setItem('gc_' + k, JSON.stringify(v));} catch(e) {}}};
+
+// ---------- Comunicación con Google ----------
+async function api(accion, datos, seg) {
+  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), (seg || 30) * 1000);
+  let r;
+  try {
+    r = await fetch(API_URL, {method:'POST', body:JSON.stringify({accion, pin:S.pin, usuario:S.nombre, datos:datos || {}}), signal:ctl.signal});
+  } catch (e) { throw new Error('Sin conexión'); }
+  finally { clearTimeout(t); }
+  let j;
+  try { j = await r.json(); } catch (e) { throw new Error('Sin conexión'); }
+  if (!j.ok) { const e = new Error(j.error || 'Error'); e.servidor = true; throw e; }
+  return j.data;
+}
+
+// ---------- Cola sin señal (IndexedDB) ----------
+const DB = (() => {
+  let p;
+  const abrir = () => p || (p = new Promise((ok, ko) => {
+    const r = indexedDB.open('gastos-campo', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('cola', {keyPath:'uid'});
+    r.onsuccess = () => ok(r.result); r.onerror = () => ko(r.error);
+  }));
+  const tx = async (modo, fn) => { const db = await abrir(); return new Promise((ok, ko) => {
+    const t = db.transaction('cola', modo), q = fn(t.objectStore('cola'));
+    t.oncomplete = () => ok(q && q.result); t.onerror = () => ko(t.error); }); };
+  return {todos:() => tx('readonly', s => s.getAll()), poner:v => tx('readwrite', s => s.put(v)), quitar:k => tx('readwrite', s => s.delete(k))};
+})();
+async function leerCola() { try { S.cola = (await DB.todos()) || []; } catch (e) { S.cola = []; } pintarPendientes(); }
+function pintarPendientes() {
+  const n = S.cola.length, err = S.cola.filter(x => x.error).length;
+  $('pend').classList.toggle('hidden', !n);
+  $('pendTxt').textContent = n === 1 ? '1 gasto guardado en el celular sin enviar' : n + ' gastos guardados en el celular sin enviar';
+  if (err) $('pendTxt').textContent += ` (${err} con error)`;
+}
+let sincronizando = false;
+async function sync(manual) {
+  if (sincronizando || !S.pin) return;
+  await leerCola();
+  const items = S.cola.filter(x => manual || !x.error);
+  if (!items.length) return;
+  sincronizando = true; let enviados = 0;
+  if (manual) cargando(true, 'Enviando…');
+  try {
+    for (const it of items) {
+      try { await api('guardarGasto', it.d, 90); await DB.quitar(it.uid); enviados++; }
+      catch (e) { if (!e.servidor) break; it.error = e.message; await DB.poner(it); }
+    }
+  } finally { sincronizando = false; if (manual) cargando(false); }
+  await leerCola();
+  if (enviados) { toast(enviados === 1 ? '1 gasto enviado' : enviados + ' gastos enviados'); refrescar(); }
+  else if (manual) toast(navigator.onLine ? 'No se pudo enviar. Revise los marcados con error.' : 'Sigue sin señal');
+  else mostrarLista();
+}
+$('bSync').onclick = () => sync(true);
+window.addEventListener('online', () => { estadoRed(); sync(); });
+window.addEventListener('offline', estadoRed);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) sync(); });
+setInterval(sync, 45000);
+function estadoRed() { $('red').classList.toggle('hidden', navigator.onLine); }
+
+// ---------- utilidades de pantalla ----------
+function toast(m, ms) { const t = $('toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = 'none', ms || 3000); }
+function cargando(on, txt) { $('load').style.display = on ? 'flex' : 'none'; $('loadTxt').textContent = txt || 'Cargando…'; }
+function ver(id) { document.querySelectorAll('.v').forEach(v => v.classList.toggle('on', v.id === id)); window.scrollTo(0, 0); }
+document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => ver('vHome'));
+document.querySelectorAll('.money').forEach(i => i.addEventListener('input', () => { const n = num(i.value); i.value = n ? fmt(n) : ''; }));
+
+// ---------- Ingreso ----------
+function aplicarCfg(c) {
+  S.cats = c.categorias; S.tipos = c.tipos; S.ia = c.ia;
+  $('hUser').textContent = S.nombre; $('bSalir').classList.remove('hidden');
+  $('gTipo').innerHTML = S.tipos.map(t => `<option>${esc(t)}</option>`).join('');
+  $('gCats').innerHTML = S.cats.map(c => `<button type="button" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  $('gCats').querySelectorAll('button').forEach(b => b.onclick = () => elegirCat(b.dataset.c));
+}
+async function entrar(nombre, pin) {
+  S.nombre = nombre; S.pin = pin;
+  cargando(true);
+  try {
+    const c = await api('entrar');
+    ls.set('nombre', nombre); ls.set('pin', pin); ls.set('cfg', c);
+    aplicarCfg(c); ver('vHome'); await cargarComisiones(); sync();
+  } catch (e) { S.pin = ''; toast(e.servidor ? e.message : 'Necesita señal para el primer ingreso'); }
+  cargando(false);
+}
+$('bEntrar').onclick = () => {
+  const n = $('lNombre').value.trim(), p = $('lPin').value.trim();
+  if (!n || !p) return toast('Escriba nombre y PIN');
+  entrar(n, p);
+};
+$('bSalir').onclick = () => {
+  if (S.cola.length && !confirm('Hay gastos sin enviar en este celular. Si sale, seguirán guardados y se enviarán cuando vuelva a entrar. ¿Salir?')) return;
+  ls.set('pin', ''); location.reload();
+};
+
+// ---------- Comisiones ----------
+async function cargarComisiones(selId) {
+  try { S.coms = await api('comisiones'); ls.set('coms', S.coms); }
+  catch (e) { if (e.servidor) { if (/PIN/.test(e.message)) { ls.set('pin', ''); location.reload(); } throw e; } S.coms = ls.get('coms', []); }
+  pintarComisiones(selId);
+  await mostrarComision();
+}
+function pintarComisiones(selId) {
+  const sel = $('selCom');
+  if (!S.coms.length) {
+    sel.innerHTML = '<option value="">No hay comisiones abiertas</option>';
+    $('resumen').innerHTML = '<p class="mu">Cree una comisión para empezar a registrar gastos.</p>';
+    $('acciones').classList.add('hidden'); $('bBorrarCom').classList.add('hidden'); $('lista').textContent = '—'; return;
+  }
+  $('acciones').classList.remove('hidden'); $('bBorrarCom').classList.remove('hidden');
+  sel.innerHTML = S.coms.map(c => `<option value="${esc(c.id)}">${esc(c.id)} · ${esc(c.responsable)} · ${esc(c.proyecto)}</option>`).join('');
+  const pref = selId || ls.get('com', '');
+  const c = S.coms.find(c => c.id === pref) || S.coms.find(c => String(c.responsable).toLowerCase() === S.nombre.toLowerCase()) || S.coms[0];
+  sel.value = c.id;
+}
+$('selCom').onchange = () => mostrarComision();
+function comActual() { return S.coms.find(c => c.id === $('selCom').value); }
+function pendientesDe(id) { return S.cola.filter(x => x.d.comId === id); }
+function pintarResumen() {
+  const c = comActual(); if (!c) return;
+  const gastado = S.gastos.reduce((a, g) => a + g.valor, 0) + pendientesDe(c.id).reduce((a, x) => a + num(x.d.valor), 0);
+  const saldo = c.presupuesto - gastado, pct = c.presupuesto ? Math.min(100, gastado / c.presupuesto * 100) : 0;
+  $('cCom').classList.toggle('neg', saldo < 0);
+  $('resumen').innerHTML = `<p class="mu" style="margin:10px 0 0">${esc(c.proyecto)}${c.lugar ? ' · ' + esc(c.lugar) : ''} · desde ${esc(c.inicio)}</p>
+    <div class="nums"><div><small>Presupuesto</small><b>${fmt(c.presupuesto)}</b></div>
+    <div><small>Gastado</small><b>${fmt(gastado)}</b></div><div><small>Saldo</small><b class="s">${fmt(saldo)}</b></div></div>
+    <div class="bar"><i style="width:${saldo < 0 ? 100 : pct}%"></i></div>`;
+}
+async function mostrarComision() {
+  const c = comActual(); if (!c) return;
+  ls.set('com', c.id);
+  S.gastos = ls.get('g_' + c.id, []);
+  await leerCola(); mostrarLista();
+  try { S.gastos = await api('gastos', {comId:c.id}); ls.set('g_' + c.id, S.gastos); mostrarLista(); }
+  catch (e) { if (e.servidor) toast(e.message); }
+}
+function mostrarLista() {
+  const c = comActual(); if (!c) return;
+  pintarResumen();
+  const pend = pendientesDe(c.id).map(x => `<div class="item">
+      <div><b>${esc(x.d.proveedor || x.d.categoria || 'Gasto con foto')}</b><span class="tag ${x.error ? 'err' : ''}">${x.error ? 'Error' : 'Sin enviar'}</span>
+      <small>${[x.d.fecha, x.d.categoria, x.error].filter(Boolean).map(esc).join(' · ')}</small></div>
+      <div class="r"><b>${num(x.d.valor) ? fmt(x.d.valor) : 'Por leer'}</b><small><button class="x" data-q="${esc(x.uid)}">Quitar</button></small></div></div>`).join('');
+  const env = S.gastos.map(g => `<div class="item">
+      <div><b>${esc(g.proveedor || g.categoria)}</b><small>${esc(g.fecha)} · ${esc(g.categoria)}${g.descripcion ? ' · ' + esc(g.descripcion) : ''}</small></div>
+      <div class="r"><b>${fmt(g.valor)}</b><small>${g.soporte ? `<a href="${esc(g.soporte)}" target="_blank" rel="noopener">Foto</a>` : ''}${g.recibo ? `<a href="${esc(g.recibo)}" target="_blank" rel="noopener">Recibo</a>` : ''}<button class="x" data-id="${esc(g.id)}">Eliminar</button></small></div>
+    </div>`).join('');
+  $('lista').innerHTML = pend + env || '<span class="mu">Aún no hay gastos en esta comisión.</span>';
+  $('lista').querySelectorAll('[data-id]').forEach(b => b.onclick = () => eliminarGasto(b.dataset.id));
+  $('lista').querySelectorAll('[data-q]').forEach(b => b.onclick = () => quitarPendiente(b.dataset.q));
+}
+async function refrescar() { const c = comActual(); try { await cargarComisiones(c && c.id); } catch (e) { } }
+async function eliminarGasto(id) {
+  const g = S.gastos.find(x => x.id === id);
+  if (!confirm(`¿Eliminar "${g.proveedor || g.categoria}" por ${fmt(g.valor)}?\nSu foto o recibo se envía a la papelera de Drive.`)) return;
+  cargando(true, 'Eliminando…');
+  try { await api('eliminarGasto', {id}); toast('Gasto eliminado'); await refrescar(); }
+  catch (e) { toast(e.servidor ? e.message : 'Necesita señal para eliminar'); }
+  cargando(false);
+}
+async function quitarPendiente(u) {
+  if (!confirm('¿Quitar este gasto que aún no se ha enviado? Se perderá.')) return;
+  await DB.quitar(u); await leerCola(); mostrarLista();
+}
+$('bBorrarCom').onclick = async () => {
+  const c = comActual(); if (!c) return;
+  const n = S.gastos.length;
+  if (!confirm(`¿Eliminar la comisión ${c.id} (${c.responsable} · ${c.proyecto})${n ? ` y sus ${n} gastos` : ''}?\nSu carpeta de fotos y recibos se envía a la papelera de Drive (se puede recuperar durante 30 días).`)) return;
+  if (pendientesDe(c.id).length) return toast('Primero envíe o quite los gastos pendientes de esta comisión');
+  cargando(true, 'Eliminando comisión…');
+  try { await api('eliminarComision', {comId:c.id}); ls.set('com', ''); toast('Comisión eliminada'); await cargarComisiones(); }
+  catch (e) { toast(e.servidor ? e.message : 'Necesita señal para eliminar'); }
+  cargando(false);
+};
+$('bNuevaCom').onclick = () => {
+  ['cProy', 'cLugar', 'cFin', 'cPres'].forEach(i => $(i).value = '');
+  $('cResp').value = S.nombre; $('cIni').value = hoy(); ver('vCom');
+};
+$('bGuardarCom').onclick = async () => {
+  const d = {responsable:$('cResp').value.trim(), proyecto:$('cProy').value.trim(), lugar:$('cLugar').value.trim(),
+             inicio:$('cIni').value, fin:$('cFin').value, presupuesto:num($('cPres').value)};
+  if (!d.responsable || !d.proyecto || !d.presupuesto) return toast('Responsable, proyecto y presupuesto son obligatorios');
+  cargando(true, 'Creando comisión y carpeta…');
+  try { const id = await api('crearComision', d); ver('vHome'); await cargarComisiones(id); toast('Comisión ' + id + ' creada'); }
+  catch (e) { toast(e.servidor ? e.message : 'Necesita señal para crear una comisión'); }
+  cargando(false);
+};
+
+// ---------- Formulario de gasto ----------
+function elegirCat(c) { S.cat = c; $('gCats').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.c === c)); }
+function tipoCambia() { const r = $('gTipo').value === 'Recibo de caja menor'; $('recibo').classList.toggle('hidden', !r); if (r) prepararFirma(); }
+$('gTipo').onchange = tipoCambia;
+function nuevoGasto(archivo) {
+  S.archivo = archivo || null; S.firmado = false;
+  ['gValor', 'gProv', 'gDesc', 'gNit', 'gNum'].forEach(i => $(i).value = '');
+  $('gFecha').value = hoy(); elegirCat('');
+  $('gTipo').value = archivo ? 'Factura POS / tiquete' : 'Sin soporte';
+  $('prev').classList.toggle('hidden', !archivo);
+  if (archivo) $('prevImg').innerHTML = archivo.preview ? `<img src="${archivo.preview}" alt="">` : '<div class="pdf">PDF</div>';
+  ver('vGasto'); tipoCambia();
+}
+function estadoIA(cls, html) { $('iaSt').className = 'st ' + cls; $('iaSt').innerHTML = html; }
+$('bRapido').onclick = () => { nuevoGasto(null); setTimeout(() => $('gValor').focus(), 50); };
+$('fCam').onchange = $('fFile').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  let a;
+  try { cargando(true, 'Preparando imagen…'); a = await comprimir(f); }
+  catch (err) { cargando(false); return toast(err.message || 'No se pudo abrir el archivo'); }
+  cargando(false); nuevoGasto(a);
+  if (!S.ia) return estadoIA('', 'Complete los datos (lectura automática no configurada).');
+  if (!navigator.onLine) return estadoIA('', 'Sin señal: elija la categoría y guarde. La foto se leerá sola al enviarse.');
+  estadoIA('', '<span style="display:inline-flex;align-items:center"><span class="spin"></span>Leyendo factura…</span>');
+  try {
+    const r = await api('analizar', {b64:a.b64, mime:a.mime}, 60);
+    if (S.archivo !== a) return;
+    if (r.error) throw Object.assign(new Error(r.error), {servidor:true});
+    if (r.valor_total) $('gValor').value = fmt(r.valor_total);
+    if (r.proveedor) $('gProv').value = r.proveedor;
+    if (r.nit) $('gNit').value = r.nit;
+    if (r.descripcion) $('gDesc').value = r.descripcion;
+    if (r.numero_factura) $('gNum').value = r.numero_factura;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(r.fecha || '')) $('gFecha').value = r.fecha;
+    if (S.cats.includes(r.categoria)) elegirCat(r.categoria);
+    if (S.tipos.includes(r.tipo_soporte)) { $('gTipo').value = r.tipo_soporte; tipoCambia(); }
+    estadoIA('ok', 'Datos leídos. Revíselos antes de guardar.');
+  } catch (err) {
+    if (S.archivo !== a) return;
+    estadoIA('err', err.servidor ? 'No se pudo leer: ' + esc(err.message) : 'Sin señal: puede guardar y la foto se leerá al enviarse.');
+  }
+};
+function comprimir(f) {
+  return new Promise((ok, ko) => {
+    if (f.type === 'application/pdf') {
+      if (f.size > 10e6) return ko(new Error('El PDF pesa más de 10 MB'));
+      const r = new FileReader(); r.onload = () => ok({b64:r.result.split(',')[1], mime:'application/pdf'}); r.onerror = ko; r.readAsDataURL(f); return;
+    }
+    const url = URL.createObjectURL(f), img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      const d = c.toDataURL('image/jpeg', 0.78); ok({b64:d.split(',')[1], mime:'image/jpeg', preview:d});
+    };
+    img.onerror = () => ko(new Error('Formato de imagen no soportado'));
+    img.src = url;
+  });
+}
+
+// Firma
+const cv = $('firma'); let ctx, trazando = false;
+function prepararFirma() {
+  const r = cv.getBoundingClientRect(); if (!r.width) return;
+  cv.width = r.width * 2; cv.height = r.height * 2; ctx = cv.getContext('2d');
+  ctx.scale(2, 2); ctx.lineWidth = 2.2; ctx.lineCap = ctx.lineJoin = 'round'; ctx.strokeStyle = '#111'; S.firmado = false;
+}
+const pto = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+cv.onpointerdown = e => { if (!ctx) prepararFirma(); trazando = true; cv.setPointerCapture(e.pointerId); ctx.beginPath(); ctx.moveTo(...pto(e)); };
+cv.onpointermove = e => { if (!trazando) return; ctx.lineTo(...pto(e)); ctx.stroke(); S.firmado = true; };
+cv.onpointerup = cv.onpointercancel = () => trazando = false;
+$('bBorrarFirma').onclick = prepararFirma;
+
+$('bGuardar').onclick = async () => {
+  const c = comActual(), esRecibo = $('gTipo').value === 'Recibo de caja menor', conFoto = !!S.archivo;
+  const d = {uid:uid(), comId:c.id, fecha:$('gFecha').value, categoria:S.cat, proveedor:$('gProv').value.trim(), nit:$('gNit').value.trim(),
+    descripcion:$('gDesc').value.trim(), valor:num($('gValor').value), tipo:$('gTipo').value, numero:$('gNum').value.trim(),
+    leerIA:conFoto && S.ia, archivo:conFoto ? {b64:S.archivo.b64, mime:S.archivo.mime} : null,
+    recibo:esRecibo ? {generar:true, firma:S.firmado ? cv.toDataURL('image/png') : ''} : null};
+  const iaPendiente = conFoto && S.ia;
+  if (!d.categoria && !iaPendiente) return toast('Elija una categoría');
+  if (!d.valor && !iaPendiente) return toast('Escriba el valor');
+  if (esRecibo && !d.proveedor) return toast('Para el recibo escriba a quién se le pagó');
+  const encolar = async () => {
+    await DB.poner({uid:d.uid, d, creado:Date.now()});
+    S.archivo = null; ver('vHome'); await leerCola(); mostrarLista();
+    toast('Sin señal: guardado en el celular. Se enviará solo cuando haya internet.', 4500);
+  };
+  if (!navigator.onLine) { try { await encolar(); } catch (e) { toast('No se pudo guardar en el celular'); } return; }
+  cargando(true, esRecibo ? 'Guardando y generando recibo…' : 'Guardando…');
+  try {
+    await api('guardarGasto', d, 90);
+    S.archivo = null; ver('vHome'); toast('Gasto guardado'); await refrescar();
+  } catch (e) {
+    if (e.servidor) toast(e.message, 4500);
+    else { try { await encolar(); } catch (e2) { toast('No se pudo guardar en el celular'); } }
+  }
+  cargando(false);
+};
+
+// ---------- Arranque ----------
+(async function () {
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  estadoRed();
+  const n = ls.get('nombre', ''), p = ls.get('pin', ''), c = ls.get('cfg', null);
+  $('lNombre').value = n;
+  if (n && p && c) {
+    S.nombre = n; S.pin = p; aplicarCfg(c); ver('vHome');
+    S.coms = ls.get('coms', []); pintarComisiones(); await mostrarComision().catch(() => {});
+    refrescar().then(() => sync());
+  }
+})();
+</script>
+</body>
+</html>
